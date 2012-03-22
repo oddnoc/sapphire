@@ -187,7 +187,6 @@ class Form extends RequestHandler {
 	
 	static $url_handlers = array(
 		'field/$FieldName!' => 'handleField',
-		'$Action!' => 'handleAction',
 		'POST ' => 'httpSubmission',
 		'GET ' => 'httpSubmission',
 	);
