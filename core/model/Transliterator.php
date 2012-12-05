@@ -6,7 +6,7 @@
  * Usage:
  * 
  * <code>
- * $tr = new Transliterator();
+ * $tr = new SS_Transliterator();
  * $ascii = $tr->toASCII($unicode);
  * </code>
  * 
@@ -58,4 +58,8 @@ class SS_Transliterator {
 	protected function useIconv($source) {
  		return iconv("utf-8", "us-ascii//IGNORE//TRANSLIT", $source);
 	}
+}
+
+if(!class_exists('Transliterator')) {
+	class Transliterator extends SS_Transliterator {}
 }
