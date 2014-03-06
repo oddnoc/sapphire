@@ -24,36 +24,21 @@ class LookupField extends DropdownField {
 	 * @return string
 	 */
 	public function Field($properties = array()) {
-		$source = $this->getSource();
 		
-		// Normalize value to array to simplify further processing
-		if(is_array($this->value) || is_object($this->value)) {
-			$values = $this->value;
-		} else {
-			$values = array(trim($this->value));
-		}
+		$source = $this->getSource();
+		$values = $this->getValueArray();
 
+		// Get selected values
 		$mapped = array();
-
-		if($source instanceof SQLMap) {
-			foreach($values as $value) {
-				$mapped[] = $source->getItem($value);
+		foreach($values as $value) {
+			if(isset($source[$value])) {
+				$mapped[] = $source[$value];
 			}
-		} else if($source instanceof ArrayAccess || is_array($source)) {
-			$source = ArrayLib::flatten($source);
-			
-			foreach($values as $value) {
-				if(isset($source[$value])) {
-					$mapped[] = $source[$value];
-				}
-			}
-		} else {
-			$mapped = array();
 		}
 
 		// Don't check if string arguments are matching against the source,
 		// as they might be generated HTML diff views instead of the actual values
-		if($this->value && !is_array($this->value) && !$mapped) {
+		if($this->value && is_string($this->value) && empty($mapped)) {
 			$mapped = array(trim($this->value));
 			$values = array();
 		}
@@ -70,6 +55,10 @@ class LookupField extends DropdownField {
 			$attrValue = "<i>(none)</i>";
 			$inputValue = '';
 		}
+		
+		return parent::Field(array_merge($properties, array(
+			'DisplayValue' => $attrValue
+		));
 
 		return "<span class=\"readonly\" id=\"" . $this->id() .
 			"\">$attrValue</span><input type=\"hidden\" name=\"" . $this->name .
@@ -92,13 +81,7 @@ class LookupField extends DropdownField {
 		return "lookup readonly";
 	}
 	
-	/**
-	 * Override parent behavior by not merging arrays.
-	 *
-	 * @return array
-	 */
-	public function getSource() {
-		return $this->source;
+	public function getHasEmptyDefault() {
+		return false;
 	}
 }
-

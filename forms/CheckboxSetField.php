@@ -50,89 +50,35 @@ class CheckboxSetField extends OptionsetField {
 	public function Field($properties = array()) {
 		Requirements::css(FRAMEWORK_DIR . '/css/CheckboxSetField.css');
 
-		$source = $this->source;
-		$values = $this->value;
-		$items = array();
+		$selectedValues = $this->getValueArray();
+		$defaultItems = $this->getDefaultItems();
 
 		// Get values from the join, if available
-		if(is_object($this->form)) {
+		if(empty($selectedValues) && $this->form instanceof Form) {
 			$record = $this->form->getRecord();
-			if(!$values && $record && $record->hasMethod($this->name)) {
-				$funcName = $this->name;
-				$join = $record->$funcName();
-				if($join) {
-					foreach($join as $joinItem) {
-						$values[] = $joinItem->ID;
-					}
-				}
+			if($record && $record->hasMethod($this->name)) {
+				$relation = $record->{$this->name}();
+				if($relation) $selectedValues = $relation->column('ID');
 			}
 		}
 		
-		// Source is not an array
-		if(!is_array($source) && !is_a($source, 'SQLMap')) {
-			if(is_array($values)) {
-				$items = $values;
-			} else {
-				// Source and values are DataObject sets.
-				if($values && is_a($values, 'SS_List')) {
-					foreach($values as $object) {
-						if(is_a($object, 'DataObject')) {
-							$items[] = $object->ID;
-						}
-					}
-				} elseif($values && is_string($values)) {
-					$items = explode(',', $values);
-					$items = str_replace('{comma}', ',', $items);
-				}
-			}
-		} else {
-			// Sometimes we pass a singluar default value thats ! an array && !SS_List
-			if($values instanceof SS_List || is_array($values)) {
-				$items = $values;
-			} else {
-				if($values === null) {
-					$items = array();
-				}
-				else {
-					$items = explode(',', $values);
-					$items = str_replace('{comma}', ',', $items);
-				}
-			}
-		}
-			
-		if(is_array($source)) {
-			unset($source['']);
-		}
-		
+		// Generate list of options to display
 		$odd = 0;
-		$options = array();
-		
-		if ($source == null) $source = array();
+		foreach($this->sourceItems() as $value => $title) {
+			$itemID = $this->ID() . '_' . preg_replace('/[^a-zA-Z0-9]/', '', $value);
+			$odd = ($odd + 1) % 2;
+			$extraClass = $odd ? 'odd' : 'even';
+			$extraClass .= ' val' . preg_replace('/[^a-zA-Z0-9\-\_]/', '_', $value);
 
-		if($source) {
-			foreach($source as $value => $item) {
-				if($item instanceof DataObject) {
-					$value = $item->ID;
-					$title = $item->Title;
-				} else {
-					$title = $item;
-				}
-
-				$itemID = $this->ID() . '_' . preg_replace('/[^a-zA-Z0-9]/', '', $value);
-				$odd = ($odd + 1) % 2;
-				$extraClass = $odd ? 'odd' : 'even';
-				$extraClass .= ' val' . preg_replace('/[^a-zA-Z0-9\-\_]/', '_', $value);
-
-				$options[] = new ArrayData(array(
-					'ID' => $itemID,
-					'Class' => $extraClass,
-					'Name' => "{$this->name}[{$value}]",
-					'Value' => $value,
-					'Title' => $title,
-					'isChecked' => in_array($value, $items) || in_array($value, $this->defaultItems),
-					'isDisabled' => $this->disabled || in_array($value, $this->disabledItems)
-				));
-			}
+			$options[] = new ArrayData(array(
+				'ID' => $itemID,
+				'Class' => $extraClass,
+				'Name' => "{$this->name}[{$value}]",
+				'Value' => $value,
+				'Title' => $title,
+				'isChecked' => in_array($value, $selectedValues) || in_array($value, $defaultItems),
+				'isDisabled' => $this->disabled || in_array($value, $defaultItems)
+			));
 		}
 
 		$properties = array_merge($properties, array('Options' => new ArrayList($options)));
@@ -145,7 +91,8 @@ class CheckboxSetField extends OptionsetField {
 	 * Note: Items marked as disabled through {@link setDisabledItems()} can still be
 	 * selected by default through this method.
 	 * 
-	 * @param Array $items Collection of array keys, as defined in the $source array
+	 * @param array $items Collection of array keys, as defined in the $source array
+	 * @return self Self reference
 	 */
 	public function setDefaultItems($items) {
 		$this->defaultItems = $items;
@@ -153,7 +100,7 @@ class CheckboxSetField extends OptionsetField {
 	}
 	
 	/**
-	 * @return Array
+	 * @return array
 	 */
 	public function getDefaultItems() {
 		return $this->defaultItems;
@@ -161,20 +108,47 @@ class CheckboxSetField extends OptionsetField {
 	
 	/**
 	 * Load a value into this CheckboxSetField
+	 * 
+	 * @param mixed $value
+	 * @param mixed $obj
+	 * @return self Self reference
 	 */
 	public function setValue($value, $obj = null) {
-		// If we're not passed a value directly, we can look for it in a relation method on the object passed as a
-		// second arg
+		
+		// If we're not passed a value directly, we can look for it in a relation method
+		// on the object passed as a second arg
 		if(!$value && $obj && $obj instanceof DataObject && $obj->hasMethod($this->name)) {
 			$funcName = $this->name;
 			$value = $obj->$funcName()->getIDList();
 		}
 
 		parent::setValue($value, $obj);
-
 		return $this;
 	}
 	
+	public function getValueArray() {
+		
+		// Null case
+		if(empty($this->value)) return array();
+		
+		// Extract string in JSON format
+		if(is_string($this->value)) {
+			
+			// If json deserialisation fails, then fallover to legacy format
+			$result = json_decode($this->value);
+			if($result !== false) {
+				return $result;
+			} else {
+				// Parse data in legacy {comma} format
+				$items = explode(',', $this->value);
+				return str_replace('{comma}', ',', $items);
+			}
+		}
+		
+		return parent::getValueArray();
+	}
+
+
 	/**
 	 * Save the current value of this CheckboxSetField into a DataObject.
 	 * If the field it is saving to is a has_many or many_many relationship,
@@ -185,24 +159,25 @@ class CheckboxSetField extends OptionsetField {
 	 */
 	public function saveInto(DataObjectInterface $record) {
 		$fieldname = $this->name;
-		$relation = ($fieldname && $record && $record->hasMethod($fieldname)) ? $record->$fieldname() : null;
-		if($fieldname && $record && $relation &&
-			($relation instanceof RelationList || $relation instanceof UnsavedRelationList)) {
-			$idList = array();
-			if($this->value) foreach($this->value as $id => $bool) {
-				if($bool) {
-					$idList[] = $id;
-				}
-			}
-			$relation->setByIDList($idList);
-		} elseif($fieldname && $record) {
-			if($this->value) {
-				$this->value = str_replace(',', '{comma}', $this->value);
-				$record->$fieldname = implode(',', (array) $this->value);
-			} else {
-				$record->$fieldname = '';
-			}
+		if(empty($fieldname) || empty($record)) return;
+		
+		$relation = $record->hasMethod($fieldname)
+			? $record->$fieldname()
+			: null;
+		
+		// Detect DB relation or field
+		if($relation instanceof Relation) {
+			// Save ids into relation
+			$relation->setByIDList($this->getValueArray());
+		} elseif($record->hasField($fieldname)) {
+			// Save dataValue into field
+			$record->$fieldname = $this->dataValue();
 		}
+	}
+	
+	public function getHasEmptyDefault() {
+		// CheckboxSetField will ignore any attempt to assign a default 'blank' value
+		return false;
 	}
 	
 	/**
@@ -212,18 +187,9 @@ class CheckboxSetField extends OptionsetField {
 	 * @return string
 	 */
 	public function dataValue() {
-		if($this->value && is_array($this->value)) {
-			$filtered = array();
-			foreach($this->value as $item) {
-				if($item) {
-					$filtered[] = str_replace(",", "{comma}", $item);
-				}
-			}
-			
-			return implode(',', $filtered);
-		}
-		
-		return '';
+		// JSON Encode this string value
+		$values = $this->getValueArray();
+		return json_encode(array_values($values));
 	}
 	
 	public function performDisabledTransformation() {

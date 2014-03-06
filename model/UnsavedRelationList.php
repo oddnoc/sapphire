@@ -16,7 +16,7 @@
  * @package framework
  * @subpackage model
  */
-class UnsavedRelationList extends ArrayList {
+class UnsavedRelationList extends ArrayList implements Relation {
 	
 	/**
 	 * The DataObject class name that this relation is on

@@ -149,42 +149,32 @@ class DropdownField extends FormField {
 	public function Field($properties = array()) {
 		$source = $this->getSource();
 		$options = array();
-		if($source) {
-			// SQLMap needs this to add an empty value to the options
-			if(is_object($source) && $this->emptyString) {
-				$options[] = new ArrayData(array(
-					'Value' => '',
-					'Title' => $this->emptyString,
-				));
-			}
-
-			foreach($source as $value => $title) {
-				$selected = false;
-				if($value === '' && ($this->value === '' || $this->value === null)) {
-					$selected = true;
+		$this->isSelected = false;
+		foreach($source as $value => $title) {
+			$selected = false;
+			if($value === '' && ($this->value === '' || $this->value === null)) {
+				$selected = true;
+			} else {
+				// check against value, fallback to a type check comparison when !value
+				if($value) {
+					$selected = ($value == $this->value);
 				} else {
-					// check against value, fallback to a type check comparison when !value
-					if($value) {
-						$selected = ($value == $this->value);
-					} else {
-						$selected = ($value === $this->value) || (((string) $value) === ((string) $this->value));
-					}
-
-					$this->isSelected = $selected;
+					$selected = ($value === $this->value) || (((string) $value) === ((string) $this->value));
 				}
-				
-				$disabled = false;
-				if(in_array($value, $this->disabledItems) && $title != $this->emptyString ){
-					$disabled = 'disabled';
-				}
-
-				$options[] = new ArrayData(array(
-					'Title' => $title,
-					'Value' => $value,
-					'Selected' => $selected,
-					'Disabled' => $disabled,
-				));
 			}
+			if($selected) $this->isSelected = true;
+
+			$disabled = false;
+			if(in_array($value, $this->disabledItems) && $title != $this->emptyString ){
+				$disabled = 'disabled';
+			}
+
+			$options[] = new ArrayData(array(
+				'Title' => $title,
+				'Value' => $value,
+				'Selected' => $selected,
+				'Disabled' => $disabled,
+			));
 		}
 
 		$properties = array_merge($properties, array('Options' => new ArrayList($options)));
@@ -223,6 +213,25 @@ class DropdownField extends FormField {
 	public function isSelected() {
 		return $this->isSelected;
 	}
+	
+	/**
+	 * Extracts the value of this field, normalised as an array.
+	 * Scalar values will return a single length array, even if empty
+	 * 
+	 * @return array List of values as an array
+	 */
+	public function getValueArray() {
+		
+		// Direct array
+		if(is_array($this->value)) return $this->value;
+		
+		// Extract lists
+		if($this->value instanceof SS_List) {
+			return $this->value->column('ID');
+		}
+		
+		return array(trim($this->value));
+	}
 
 	/**
 	 * Gets the source array including any empty default values.
@@ -230,11 +239,25 @@ class DropdownField extends FormField {
 	 * @return array
 	 */
 	public function getSource() {
-		if(is_array($this->source) && $this->getHasEmptyDefault()) {
-			return array('' => $this->emptyString) + (array) $this->source;
-		} else {
-			return $this->source;
+				
+		// Enforce key/title associative form
+		$items = array();
+		if(is_array($this->source) || ($this->source instanceof Traversable)) {
+			foreach($this->source as $key => $value) {
+				if($value instanceof DataObject) {
+					$items[$value->ID] = $value->Title;
+				} else {
+					$items[$key] = $value;
+				}
+			}
 		}
+		
+		// Inject default option
+		if($includeEmpty && $this->getHasEmptyDefault()) {
+			$items = array('' => $this->getEmptyString()) + $items;
+		}
+		
+		return $items;
 	}
 
 	/**
