@@ -11,13 +11,18 @@ class CountryDropdownField extends DropdownField {
 
 	/**
 	 * Should we default the dropdown to the region determined from the user's locale?
+	 * 
+	 * @config
 	 * @var bool
 	 */
 	private static $default_to_locale = true;
 
 	/**
-	 * The region code to default to if default_to_locale is set to false, or we can't determine a region from a locale
-	 *  @var string
+	 * The region code to default to if default_to_locale is set to false, or we can't
+	 * determine a region from a locale.
+	 * 
+	 * @config
+	 * @var string
 	 */
 	private static $default_country = 'NZ';
 
@@ -70,6 +75,6 @@ class CountryDropdownField extends DropdownField {
 			$this->value = $this->config()->default_country;
 		}
 
-		return parent::Field();
+		return parent::Field($properties);
 	}
 }

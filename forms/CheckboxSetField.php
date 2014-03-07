@@ -36,9 +36,11 @@
  * @package forms
  * @subpackage fields-basic
  */
-class CheckboxSetField extends OptionsetField {
+class CheckboxSetField extends MultiSelectField {
 	
 	/**
+	 * List of items to mark as checked, and may not be unchecked
+	 * 
 	 * @var array
 	 */
 	protected $defaultItems = array();
@@ -84,6 +86,11 @@ class CheckboxSetField extends OptionsetField {
 		$properties = array_merge($properties, array('Options' => new ArrayList($options)));
 
 		return $this->customise($properties)->renderWith($this->getTemplates());
+	}
+	
+	public function getMultiple() {
+		// All checkbox set fields allow multiple selection
+		return true;
 	}
 	
 	/**
@@ -256,10 +263,6 @@ class CheckboxSetField extends OptionsetField {
 
 	public function Type() {
 		return 'optionset checkboxset';
-	}
-	
-	public function ExtraOptions() {
-		return FormField::ExtraOptions();
 	}
 	
 }

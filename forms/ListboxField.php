@@ -25,7 +25,7 @@
  * @package forms
  * @subpackage fields-basic
  */
-class ListboxField extends DropdownField {
+class ListboxField extends MultiSelectField {
 
 	/**
 	 * The size of the field in rows.
@@ -124,12 +124,17 @@ class ListboxField extends DropdownField {
 		return $this;
 	}
 	
+	public function getMultiple() {
+		return $this->multiple;
+	}
+	
 	/** 
 	 * Sets this field to have a muliple select attribute
-	 * @param boolean $bool
+	 * 
+	 * @param bool $boolean
 	 */
-	public function setMultiple($bool) {
-		$this->multiple = $bool;
+	public function setMultiple($boolean) {
+		$this->multiple = $boolean;
 		return $this;
 	}
 	

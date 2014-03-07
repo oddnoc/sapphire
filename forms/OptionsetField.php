@@ -50,12 +50,7 @@
  * @package forms
  * @subpackage fields-basic
  */
-class OptionsetField extends DropdownField {
-	
-	/**
-	 * @var Array
-	 */
-	protected $disabledItems = array();
+class OptionsetField extends SelectField {
 
 	public function Field($properties = array()) {
 		$source = $this->getSource();
@@ -88,37 +83,6 @@ class OptionsetField extends DropdownField {
 		return $this->customise($properties)->renderWith(
 			$this->getTemplates()
 		);
-	}
-
-	public function performReadonlyTransformation() {
-		// Source and values are DataObject sets.
-		$field = $this->castedCopy('LookupField');
-		$field->setValue($this->getSource());
-		$field->setReadonly(true);
-		
-		return $field;
-	}
-	
-	/**
-	 * Mark certain elements as disabled,
-	 * regardless of the {@link setDisabled()} settings.
-	 * 
-	 * @param array $items Collection of array keys, as defined in the $source array
-	 */
-	public function setDisabledItems($items) {
-		$this->disabledItems = $items;
-		return $this;
-	}
-	
-	/**
-	 * @return Array
-	 */
-	public function getDisabledItems() {
-		return $this->disabledItems;
-	}
-	
-	public function ExtraOptions() {
-		return new ArrayList();
 	}
 
 }
