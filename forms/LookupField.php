@@ -9,7 +9,7 @@
  * @package forms
  * @subpackage fields-basic
  */
-class LookupField extends DropdownField {
+class LookupField extends MultiSelectField {
 
 	/**
 	 * @var boolean $readonly
