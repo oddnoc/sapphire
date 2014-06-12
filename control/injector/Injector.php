@@ -180,6 +180,13 @@ class Injector {
 	 * @var Factory
 	 */
 	protected $objectCreator;
+	
+	/**
+	 * Service used to extract configuration for a named service
+	 *
+	 * @var Injector_ConfigLocator
+	 */
+	protected $configLocator;
 
 	/**
 	 * Create a new injector. 
@@ -197,14 +204,13 @@ class Injector {
 		);
 		
 		$this->autoProperties = array();
-
-
-		$creatorClass = isset($config['creator']) ? $config['creator'] : 'InjectionCreator';
-		$locatorClass = isset($config['locator']) ? $config['locator'] : 'ServiceConfigurationLocator';
 		
-		$this->objectCreator = new $creatorClass;
-		$this->configLocator = new $locatorClass;
-		
+		$this->objectCreator = isset($config['creator'])
+			? new $config['creator']
+			: new InjectionCreator();
+		$this->configLocator = isset($config['locator'])
+			? new $config['locator']
+			: new ServiceConfigurationLocator();
 		if ($config) {
 			$this->load($config);
 		}
@@ -238,6 +244,11 @@ class Injector {
 	 */
 	public static function set_inst(Injector $instance) {
 		return self::$instance = $instance;
+	}
+	
+	public function __clone() {
+		$this->configLocator = clone $this->configLocator;
+		$this->objectCreator = clone $this->objectCreator;
 	}
 	
 	/**
@@ -294,16 +305,18 @@ class Injector {
 	}
 	
 	/**
-	 * Set the configuration locator 
-	 * @param ServiceConfigurationLocator $configLocator 
+	 * Set the configuration locator
+	 *  
+	 * @param Injector_ConfigLocator $configLocator 
 	 */
 	public function setConfigLocator($configLocator) {
 		$this->configLocator = $configLocator;
 	}
 	
 	/**
-	 * Retrieve the configuration locator 
-	 * @return ServiceConfigurationLocator 
+	 * Retrieve the configuration locator
+	 * 
+	 * @return Injector_ConfigLocator 
 	 */
 	public function getConfigLocator() {
 		return $this->configLocator;
@@ -772,6 +785,31 @@ class Injector {
 	}
 	
 	/**
+	 * Resets all data against this instance, flushing the config locator, any loaded configurations,
+	 * and any registered services.
+	 * 
+	 * Warning: This method has performance implications, as it may be costly to regenerate cached data.
+	 * Configuration that has been initialised via {@see Injector::load} will also be lost.
+	 * If possible it is preferable to update the config via the {@see Injector::load} method.
+	 * 
+	 * If necessary to use this method, it's advisable to do so within a nested Injector state, and 
+	 * only during tests, or other situations where performance is not critical.
+	 */
+	public function reset() {
+		$this->injectMap = array();
+		$this->serviceCache = array(
+			'Injector' => $this,
+		);
+		$this->specs = array(
+			'Injector' => array('class' => 'Injector')
+		);
+		
+		$this->autoProperties = array();
+		
+		if($this->configLocator) $this->configLocator->reset();
+	}
+	
+	/**
 	 * Get a named managed object
 	 * 
 	 * Will first check to see if the item has been registered as a configured service/bean
@@ -886,4 +924,27 @@ class Injector {
 	public function createWithArgs($name, $constructorArgs) {
 		return $this->get($name, false, $constructorArgs);
 	}
+}
+
+/*
+ * Used to locate configuration for a particular named service. 
+ * 
+ * @package framework
+ * @subpackage injector
+ */
+interface Injector_ConfigLocator {
+	
+	/**
+	 * Return configuration for the given named service. 
+	 * If it isn't found, return null.
+	 * 
+	 * @param string $name
+	 * @return array Configuration data
+	 */
+	public function locateConfigFor($name);
+	
+	/**
+	 * Ask the config locator to clear any cached data
+	 */
+	public function reset();
 }

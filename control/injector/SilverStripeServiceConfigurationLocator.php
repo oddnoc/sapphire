@@ -7,7 +7,7 @@
  * @package framework
  * @subpackage injector
  */
-class SilverStripeServiceConfigurationLocator {
+class SilverStripeServiceConfigurationLocator implements Injector_ConfigLocator {
 	
 	private $configs = array();
 	
@@ -45,5 +45,9 @@ class SilverStripeServiceConfigurationLocator {
 			// lookup through parents again
 			$this->configs[$name] = false;
 		}
+	}
+
+	public function reset() {
+		$this->configs = array();
 	}
 }

@@ -792,7 +792,7 @@ class TestSetterInjections extends ViewableData implements TestOnly {
  *
  * @see https://github.com/silverstripe/sapphire
  */
-class SSObjectCreator extends InjectionCreator {
+class SSObjectCreator extends InjectionCreator implements TestOnly {
 	private $injector;
 	
 	public function __construct($injector) {

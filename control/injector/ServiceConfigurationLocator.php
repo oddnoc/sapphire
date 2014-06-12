@@ -8,8 +8,9 @@
  * @package framework
  * @subpackage injector
  */
-class ServiceConfigurationLocator {
-	public function locateConfigFor($name) {
-		
-	}
+class ServiceConfigurationLocator implements Injector_ConfigLocator {
+	
+	public function locateConfigFor($name) { /* NOOP */ }
+
+	public function reset() { /* NOOP */ }
 }
