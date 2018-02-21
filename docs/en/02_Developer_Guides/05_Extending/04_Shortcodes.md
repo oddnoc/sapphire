@@ -3,13 +3,13 @@ summary: Flexible content embedding
 
 # Shortcodes
 
-The [ShortcodeParser](api:SilverStripe\View\Parsers\ShortcodeParser) API is simple parser that allows you to map specifically formatted content to a callback to 
+The [ShortcodeParser](api:SilverStripe\View\Parsers\ShortcodeParser) API is simple parser that allows you to map specifically formatted content to a callback to
 transform them into something else. You might know this concept from forum software which don't allow you to insert
-direct HTML, instead resorting to a custom syntax. 
+direct HTML, instead resorting to a custom syntax.
 
-In the CMS, authors often want to insert content elements which go beyond standard formatting, at an arbitrary position 
-in their WYSIWYG editor. Shortcodes are a semi-technical solution for this. A good example would be embedding a 3D file 
-viewer or a Google Map at a certain location. 
+In the CMS, authors often want to insert content elements which go beyond standard formatting, at an arbitrary position
+in their WYSIWYG editor. Shortcodes are a semi-technical solution for this. A good example would be embedding a 3D file
+viewer or a Google Map at a certain location.
 
 ```php
 $text = "<h1>My Map</h1>[map]"
@@ -30,8 +30,8 @@ Here's some syntax variations:
 [my_shortcode,myparameter="value"]Enclosed Content[/my_shortcode]
 ```
 
-Shortcodes are automatically parsed on any database field which is declared as [HTMLValue](api:SilverStripe\View\Parsers\HTMLValue) or [DBHTMLText](api:SilverStripe\ORM\FieldType\DBHTMLText), 
-when rendered into a template. This means you can use shortcodes on common fields like `SiteTree.Content`, and any 
+Shortcodes are automatically parsed on any database field which is declared as [HTMLValue](api:SilverStripe\View\Parsers\HTMLValue) or [DBHTMLText](api:SilverStripe\ORM\FieldType\DBHTMLText),
+when rendered into a template. This means you can use shortcodes on common fields like `SiteTree.Content`, and any
 other [DataObject::$db](api:SilverStripe\ORM\DataObject::$db) definitions of these types.
 
 Other fields can be manually parsed with shortcodes through the `parse` method.
@@ -45,7 +45,7 @@ ShortcodeParser::get_active()->parse($text);
 ```
 
 ## Defining Custom Shortcodes
- 
+
 First we need to define a callback for the shortcode.
 
 **mysite/code/Page.php**
@@ -54,13 +54,13 @@ First we need to define a callback for the shortcode.
 ```php
 use SilverStripe\CMS\Model\SiteTree;
 
-class Page extends SiteTree 
+class Page extends SiteTree
 {
     private static $casting = [
         'MyShortCodeMethod' => 'HTMLText'
     ];
 
-    public static function MyShortCodeMethod($arguments, $content = null, $parser = null, $tagName) 
+    public static function MyShortCodeMethod($arguments, $content = null, $parser = null, $tagName)
     {
         return "<em>" . $tagName . "</em> " . $content . "; " . count($arguments) . " arguments.";
     }
@@ -96,8 +96,8 @@ SilverStripe comes with several shortcode parsers already.
 
 ### Links
 
-Internal page links keep references to their database IDs rather than the URL, in order to make these links resilient 
-against moving the target page to a different location in the page tree. This is done through the `[sitetree_link]` 
+Internal page links keep references to their database IDs rather than the URL, in order to make these links resilient
+against moving the target page to a different location in the page tree. This is done through the `[sitetree_link]`
 shortcode, which takes an `id` parameter.
 
 
@@ -115,7 +115,7 @@ Links to internal `File` database records work exactly the same, but with the `[
 ### Images
 
 Images inserted through the "Insert Media" form (WYSIWYG editor) need to retain a relationship with
-the underlying `[Image](api:SilverStripe\Assets\Image)` database record. The `[image]` shortcode saves this database reference
+the underlying [`Image`](api:SilverStripe\Assets\Image) database record. The `[image]` shortcode saves this database reference
 instead of hard-linking to the filesystem path of a given image.
 
 ```html
@@ -124,11 +124,11 @@ instead of hard-linking to the filesystem path of a given image.
 
 ### Media (Photo, Video and Rich Content)
 
-Many media formats can be embedded into websites through the `<object>` tag, but some require plugins like Flash or 
-special markup and attributes. OEmbed is a standard to discover these formats based on a simple URL, for example a 
+Many media formats can be embedded into websites through the `<object>` tag, but some require plugins like Flash or
+special markup and attributes. OEmbed is a standard to discover these formats based on a simple URL, for example a
 Youtube link pasted into the "Insert Media" form of the CMS.
 
-Since TinyMCE can't represent all these variations, we're showing a placeholder instead, and storing the URL with a 
+Since TinyMCE can't represent all these variations, we're showing a placeholder instead, and storing the URL with a
 custom `[embed]` shortcode.
 
 ```html
@@ -146,7 +146,7 @@ HTML with unprocessed shortcodes in it is still valid HTML. As a result, shortco
 
 The first is called "element scope" use, the second "attribute scope"
 
-You may not use shortcodes in any other location. Specifically, you can not use shortcodes to generate attributes or 
+You may not use shortcodes in any other location. Specifically, you can not use shortcodes to generate attributes or
 change the name of a tag. These usages are forbidden:
 
 ```html
@@ -155,9 +155,9 @@ change the name of a tag. These usages are forbidden:
 <a [titleattribute]>link</a>
 ```
 
-You may need to escape text inside attributes `>` becomes `&gt;`, You can include HTML tags inside a shortcode tag, but 
+You may need to escape text inside attributes `>` becomes `&gt;`, You can include HTML tags inside a shortcode tag, but
 you need to be careful of nesting to ensure you don't break the output.
-  
+
 ```html
 <!-- Good -->
 <div>
@@ -178,7 +178,7 @@ you need to be careful of nesting to ensure you don't break the output.
 
 ### Location
 
-Element scoped shortcodes have a special ability to move the location they are inserted at to comply with HTML lexical 
+Element scoped shortcodes have a special ability to move the location they are inserted at to comply with HTML lexical
 rules. Take for example this basic paragraph tag:
 
 ```html
@@ -211,7 +211,7 @@ When the location attribute is "leftAlone" or "center" then the DOM is split aro
 Here is a summary of the callback parameter values based on some example shortcodes.
 
 ```php
-public function MyCustomShortCode($arguments, $content = null, $parser = null, $tagName) 
+public function MyCustomShortCode($arguments, $content = null, $parser = null, $tagName)
 {
     // ..
 }
